@@ -34,13 +34,14 @@ The fine-mapping analyses use imputed HLA allele dosages and allele-to-residue m
 
 | Analysis | Code | Manuscript connection |
 | --- | --- | --- |
-| **DRB1 conditional fine-mapping** | [`01_drb1_conditional/conditional_test_HLA_binary_stepwise2_deviance.R`](scripts/01_drb1_conditional/conditional_test_HLA_binary_stepwise2_deviance.R) | Forward conditional haplotype-based likelihood-ratio tests identifying DRβ1 positions **71, 13 and 86**|
+| **MHC-wide single-marker association** | [`01_mhc_association/mhc_single_marker_logistic.sh`](scripts/01_mhc_association/mhc_single_marker_logistic.sh) | PLINK2 logistic association underlying the MHC association analysis|
+| **DRB1 conditional fine-mapping** | [`01_drb1_conditional/conditional_test_HLA_binary_stepwise2_deviance.R`](scripts/01_drb1_conditional/conditional_test_HLA_binary_stepwise2_deviance.R) | Forward conditional haplotype-based likelihood-ratio tests identifying DRβ1 positions 71, 13 and 86|
+| **Sequential MHC conditioning** | [`02_mhc_conditional/sequential_mhc_conditional.sh`](scripts/02_mhc_conditional/sequential_mhc_conditional.sh) | Adapted two-stage PLINK2 conditional testing (DRB1 classical alleles followed by MHC-wide candidates) |
 | **Exhaustive residue combinations** | [`02_exhaustive/exhaustive_test.R`](scripts/02_exhaustive/exhaustive_test.R) | Comparison of residue-position pairs and triplets; 1,275 pairs and 20,825 triplets reported |
 | **Permutation analysis** | [`03_permutation/permutation_test_new.R`](scripts/03_permutation/permutation_test_new.R) | Allele-to-residue mapping permutations assessing the three-position model|
 | **Variance explained** | [`04_variance_explained/Variance_explained.R`](scripts/04_variance_explained/Variance_explained.R) | Nagelkerke pseudo-R² for fine-mapped residue models|
 | **β86 beyond DRB1*15:01** | [`04_variance_explained/DRB1_B86_Variance_explained.R`](scripts/04_variance_explained/DRB1_B86_Variance_explained.R) | Conditional contribution of position 86 beyond the classical DRB1*15:01 association|
 | **Additional MHC residue associations** | [`05_additional_mhc/univar_residue_logistic.R`](scripts/05_additional_mhc/univar_residue_logistic.R) | Residue-level association analysis at HLA loci|
-| **Sequential MHC conditional fine-mapping** | [`05_additional_mhc/conditional_test_HLA_binary_stepwise_multiHLA_preCon.R`](scripts/05_additional_mhc/conditional_test_HLA_binary_stepwise_multiHLA_preCon.R) | Forward conditional likelihood-ratio testing of non-DRB1 amino-acid positions, with previously identified positions specified as fixed covariates; relevant to the independent MHC signals |
 | **Conditional residue/haplotype effect estimates** | [`05_additional_mhc/multiHLA_block_conditional_table.R`](scripts/05_additional_mhc/multiHLA_block_conditional_table.R) | Multivariable logistic regression of target residue haplotypes, adjusted for selected residues at other HLA loci; produces ORs, 95% CIs and frequency tables |
 
 The table indicates the associated manuscript analyses. Publication figures require additional plotting and formatting. 
