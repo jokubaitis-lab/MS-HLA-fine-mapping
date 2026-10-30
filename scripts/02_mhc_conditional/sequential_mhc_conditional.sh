@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Adapted from the two forward stepwise PLINK2 loops in HLA_association_binary.cmd.
 # Stage 1: DRB1 classical alleles; stage 2: MHC HLA_/AA_/rs markers.
 # IMPORTANT: Selection and threshold conventions should be checked against final study logs.
 set -euo pipefail
