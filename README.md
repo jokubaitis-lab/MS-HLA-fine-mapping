@@ -1,4 +1,4 @@
-# HLA amino-acid fine-mapping in multiple sclerosis
+# HLA fine-mapping in multiple sclerosis
 
 Analysis code accompanying **“HLA Fine-Mapping Resolves Multiple Sclerosis Susceptibility to Amino-Acid Residues that Shape Peptide-Binding Specificity.”**
 
@@ -20,9 +20,9 @@ The workflow follows two connected stages. Genotype QC, haplotype phasing and HL
 
 Genotypes were quality-controlled before pre-phasing with **SHAPEIT2** and HLA imputation through the **Michigan Imputation Server** using **Minimac4** and the multi-ethnic HLA reference panel v2. Following imputation and study-specific quality control, classical HLA alleles, amino-acid polymorphisms and MHC SNPs were available for association analysis. The manuscript reports **16,056 retained MHC markers** after post-imputation filtering.
 
-- [`scripts/00_hla_imputation/README.md`](scripts/00_hla_imputation/README.md) summarises the genotype QC, HLA imputation and post-imputation processing stages.
-- [`scripts/00_hla_imputation/01_genotype_qc_mhc.sh`](scripts/00_hla_imputation/01_genotype_qc_mhc.sh) documents selected genotype QC and chr6:28–34 Mb extraction commands.
-- [`scripts/00_hla_imputation/02_post_imputation_qc.sh`](scripts/00_hla_imputation/02_post_imputation_qc.sh) illustrates post-imputation R² and minor allele count filtering of HLA dosage VCFs.
+- [`00_hla_imputation/README.md`](scripts/00_hla_imputation/README.md) summarises the genotype QC, HLA imputation and post-imputation processing stages.
+- [`00_hla_imputation/01_genotype_qc_mhc.sh`](scripts/00_hla_imputation/01_genotype_qc_mhc.sh) documents selected genotype QC and chr6:28–34 Mb extraction commands.
+- [`00_hla_imputation/02_post_imputation_qc.sh`](scripts/00_hla_imputation/02_post_imputation_qc.sh) illustrates post-imputation R² and minor allele count filtering of HLA dosage VCFs.
 
 The scripts are parameterised excerpts of the study workflow; reference alignment, cohort-specific sample QC and server-side imputation are described rather than redistributed as executable steps.
 
@@ -34,12 +34,14 @@ The fine-mapping analyses use imputed HLA allele dosages and allele-to-residue m
 
 | Analysis | Code | Manuscript connection |
 | --- | --- | --- |
-| **DRB1 conditional fine-mapping** | [`conditional_test_HLA_binary_stepwise2_deviance.R`](scripts/01_drb1_conditional/conditional_test_HLA_binary_stepwise2_deviance.R) | Forward conditional haplotype-based likelihood-ratio tests identifying DRβ1 positions **71, 13 and 86**|
-| **Exhaustive residue combinations** | [`exhaustive_test.R`](scripts/02_exhaustive/exhaustive_test.R) | Comparison of residue-position pairs and triplets; 1,275 pairs and 20,825 triplets reported |
-| **Permutation analysis** | [`permutation_test_new.R`](scripts/03_permutation/permutation_test_new.R) | Allele-to-residue mapping permutations assessing the three-position model|
-| **Variance explained** | [`Variance_explained.R`](scripts/04_variance_explained/Variance_explained.R) | Nagelkerke pseudo-R² for fine-mapped residue models|
-| **β86 beyond DRB1*15:01** | [`DRB1_B86_Variance_explained.R`](scripts/04_variance_explained/DRB1_B86_Variance_explained.R) | Conditional contribution of position 86 beyond the classical DRB1*15:01 association|
-| **Additional MHC residue associations** | [`univar_residue_logistic.R`](scripts/05_additional_mhc/univar_residue_logistic.R) | Residue-level association analysis at HLA loci outside DRB1 |
+| **DRB1 conditional fine-mapping** | [`01_drb1_conditional/conditional_test_HLA_binary_stepwise2_deviance.R`](scripts/01_drb1_conditional/conditional_test_HLA_binary_stepwise2_deviance.R) | Forward conditional haplotype-based likelihood-ratio tests identifying DRβ1 positions **71, 13 and 86**|
+| **Exhaustive residue combinations** | [`02_exhaustive/exhaustive_test.R`](scripts/02_exhaustive/exhaustive_test.R) | Comparison of residue-position pairs and triplets; 1,275 pairs and 20,825 triplets reported |
+| **Permutation analysis** | [`03_permutation/permutation_test_new.R`](scripts/03_permutation/permutation_test_new.R) | Allele-to-residue mapping permutations assessing the three-position model|
+| **Variance explained** | [`04_variance_explained/Variance_explained.R`](scripts/04_variance_explained/Variance_explained.R) | Nagelkerke pseudo-R² for fine-mapped residue models|
+| **β86 beyond DRB1*15:01** | [`04_variance_explained/DRB1_B86_Variance_explained.R`](scripts/04_variance_explained/DRB1_B86_Variance_explained.R) | Conditional contribution of position 86 beyond the classical DRB1*15:01 association|
+| **Additional MHC residue associations** | [`05_additional_mhc/univar_residue_logistic.R`](scripts/05_additional_mhc/univar_residue_logistic.R) | Residue-level association analysis at HLA loci|
+| **Sequential MHC conditional fine-mapping** | [`05_additional_mhc/conditional_test_HLA_binary_stepwise_multiHLA_preCon.R`](scripts/05_additional_mhc/conditional_test_HLA_binary_stepwise_multiHLA_preCon.R) | Forward conditional likelihood-ratio testing of non-DRB1 amino-acid positions, with previously identified positions specified as fixed covariates; relevant to the independent MHC signals |
+| **Conditional residue/haplotype effect estimates** | [`05_additional_mhc/multiHLA_block_conditional_table.R`](scripts/05_additional_mhc/multiHLA_block_conditional_table.R) | Multivariable logistic regression of target residue haplotypes, adjusted for selected residues at other HLA loci; produces ORs, 95% CIs and frequency tables |
 
 The table indicates the associated manuscript analyses. Publication figures require additional plotting and formatting. 
 
@@ -69,28 +71,6 @@ Allele identifiers and dosage-column ordering must be consistent across inputs.
 
 The shared R scripts primarily use base R; install additional R packages if indicated by an individual script. Software versions and command-line options should be selected consistently with the input reference panel and genome build (**GRCh37/hg19** in this study).
 
-## Usage
-
-Clone or download this repository, prepare the required imputed dosage and metadata files, and run the analysis scripts with the positional arguments defined at the beginning of each script.
-
-For example, to evaluate DRB1 residue combinations:
-
-```bash
-Rscript scripts/02_exhaustive/exhaustive_test.R \
-  /path/to/HLA_DICTIONARY_AA.hg19.imgt3320.AA_tf.in_ref.rds \
-  /path/to/hla_dosage_prefix \
-  /path/to/allele_names.txt \
-  /path/to/phenotypes.txt MS_pheno \
-  /path/to/covariates.txt \
-  "PC1 + PC2 + PC3 + PC4 + PC5 + D_MSGP1_AU + D_MSGP2_AU + D_MSPGX_AU" \
-  DRB1 3 /path/to/results/drb1_exhaustive
-```
-
-For the DRB1 conditional script, set `HLA_DICTIONARY_DIR` to the directory containing the HLA dictionary. The shared version specifies PC1–PC5 and all three cohort indicators across conditional rounds.
-
-## Relationship to the HLA analyses tutorial
-
-This work builds on the open HLA imputation and association framework described in [*HLA_analyses_tutorial*](https://github.com/immunogenomics/HLA_analyses_tutorial). We adapted the workflow to the Australian MS cohorts and implemented study-specific residue-based conditional haplotype analysis, exhaustive model comparisons, allele-mapping permutation tests and variance-explained analyses. Please refer to the original tutorial for detailed background on general HLA genotype QC, imputation and association procedures.
 
 ## Citation
 
