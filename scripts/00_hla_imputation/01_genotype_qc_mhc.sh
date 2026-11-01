@@ -8,10 +8,13 @@ set -euo pipefail
 input=$1; out=$2; fasta=$3
 mkdir -p "$out"
 for tool in plink snpflip python3; do command -v "$tool" >/dev/null || { echo "Missing $tool" >&2; exit 1; }; done
-: "${DUP_SCRIPT:?Set DUP_SCRIPT to reviewed get_duprem_var.py path}"
-: "${HIGH_HET_SCRIPT:?Set HIGH_HET_SCRIPT to reviewed HighHeterozygosityOutlier.R path}"
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+DUP_SCRIPT=${DUP_SCRIPT:-"$script_dir/helpers/get_duprem_var.py"}
+HIGH_HET_SCRIPT=${HIGH_HET_SCRIPT:-"$script_dir/helpers/HighHeterozygosityOutlier.R"}
 : "${R_SCRIPT:=Rscript}"
 plink --bfile "$input" --missing --out "$out/initial"
+# Duplicate helper expects both initial.lmiss and initial.bim.
+cp "${input}.bim" "$out/initial.bim"
 # Helper reads PLINK missingness and produces prefix.remdup.snp
 python3 "$DUP_SCRIPT" "$out/initial"
 [[ -f "$out/initial.remdup.snp" ]] || { echo 'Duplicate exclusion file missing' >&2; exit 1; }
@@ -23,6 +26,7 @@ snpflip --fasta-genome "$fasta" --bim-file "$out/dedup.bim" -o "$out/strand"
 plink --bfile "$out/dedup" --exclude "$out/strand.ambiguous" --make-bed --out "$out/no_ambiguous"
 plink --bfile "$out/no_ambiguous" --geno 0.10 --hwe 1e-10 --make-bed --out "$out/initial_variant_qc"
 plink --bfile "$out/initial_variant_qc" --missing --out "$out/pre_sample_qc"
+"$R_SCRIPT" "$script_dir/helpers/MissingThreshold.R" "$out/pre_sample_qc.imiss" 0.05
 plink --bfile "$out/initial_variant_qc" --mind 0.05 --make-bed --out "$out/sample_missingness_qc"
 plink --bfile "$out/sample_missingness_qc" --het --out "$out/heterozygosity"
 "$R_SCRIPT" "$HIGH_HET_SCRIPT" "$out/heterozygosity.het"
@@ -35,13 +39,20 @@ plink --bfile "$out/sample_missingness_qc" --remove "$het_remove" --make-bed --o
 awk '$1==6 && $4>24000000 && $4<36000000 {print $2}' "$out/heterozygosity_qc.bim" > "$out/mhc_exclude.snps"
 plink --bfile "$out/heterozygosity_qc" --exclude "$out/mhc_exclude.snps" --maf 0.05 --indep-pairwise 50 5 0.2 --out "$out/relatedness_prune"
 plink --bfile "$out/heterozygosity_qc" --extract "$out/relatedness_prune.prune.in" --genome --out "$out/relatedness"
+# Historical near-duplicate removal helper: writes suggested IDs for review.
+awk 'NR==1 || $10>0.9' "$out/relatedness.genome" > "$out/ibd_pairs_over_0.9.genome"
+python3 "$script_dir/helpers/get_remID.py" "$out/pre_sample_qc.imiss" "$out/ibd_pairs_over_0.9.genome" "$out/suggested_ibd_remove.txt"
 # Historical IBD >0.9 used for near-duplicate identification; final sample
 # exclusion also involved IBS/F-outlier review. Require externally reviewed list.
 awk 'NR>1 && $10>0.9 {print}' "$out/relatedness.genome" > "$out/ibd_over_0.9.review.tsv"
-echo 'REVIEW REQUIRED: validate strand flips, IBD pairs, IBS/F outliers, ancestry exclusions.' >&2
+plink --bfile "$out/heterozygosity_qc" --extract "$out/relatedness_prune.prune.in" --het --out "$out/inbreeding_review"
+"$R_SCRIPT" "$script_dir/helpers/F_outlier.R" "$out/inbreeding_review.het"
+echo 'REVIEW REQUIRED: validate strand flips, suggested IBD removals, F outliers, ancestry exclusions.' >&2
 : "${REVIEWED_SAMPLE_REMOVE:?Set REVIEWED_SAMPLE_REMOVE to reviewed two-column FID IID exclusion file (can be empty)}"
 [[ -f "$REVIEWED_SAMPLE_REMOVE" ]] || exit 1
 plink --bfile "$out/heterozygosity_qc" --remove "$REVIEWED_SAMPLE_REMOVE" --make-bed --out "$out/sample_qc"
+plink --bfile "$out/sample_qc" --missing --out "$out/final_variant_missingness"
+"$R_SCRIPT" "$script_dir/helpers/MissingVarThreshold.R" "$out/final_variant_missingness.lmiss"
 plink --bfile "$out/sample_qc" --geno 0.02 --make-bed --out "$out/variant_missingness_qc"
 plink --bfile "$out/variant_missingness_qc" --mac 5 --make-bed --out "$out/mac5"
 plink --bfile "$out/mac5" --hardy --freq --out "$out/reference_frequency_review"
