@@ -1,21 +1,48 @@
-# Genotype quality control and HLA imputation
+# HLA imputation and genotype QC (GRCh37/hg19)
 
-This directory documents the genotype preparation and HLA imputation stages underlying the study of HLA amino-acid variation and multiple sclerosis susceptibility. The analysis used GRCh37/hg19 coordinates, genotype QC, HLA-region preparation, and imputation using the Michigan Imputation Server with the four-digit multi-ethnic HLA reference panel v2. See the [HLA QC and imputation tutorial](https://github.com/immunogenomics/HLA_analyses_tutorial/blob/main/tutorial_HLAQCImputation.ipynb) for reference harmonisation and detailed platform-specific procedures.
+This directory contains **expanded, public-facing reconstructions** of the genotype QC and HLA-region imputation preparation used in the study. The commands follow the original study scripts, but include explicit manual review gates where historical helper scripts, reference files, or decisions are not available. **These files are not a verified end-to-end rerun of the historical pipeline.** No individual-level genotype data, identifiers, credentials or institution-specific absolute paths are distributed.
 
-## Scripts
+## Two distinct imputation workflows
 
-| Script | Purpose |
+1. **Genome-wide SNP imputation for population structure:** the historical genome-wide workflow prepared all 22 autosomes using the HRC alignment checker, submitted data to Michigan Imputation Server, and retained genome-wide imputed SNPs for genetic PC calculation. Its historical post-imputation outputs are separate from HLA fine-mapping inputs. The precise PCA computation should be documented in the relevant PCA script.
+2. **HLA-specific imputation for fine-mapping:** a separate, chr6:28–34 Mb QC and imputation workflow used the Michigan Imputation Server **Four-digit Multi-ethnic HLA v2** reference panel to obtain HLA-region dosages. Classical HLA allele and amino-acid dosage encoding for the association/fine-mapping analyses requires additional project-specific scripts.
+
+## Files
+
+| File | Function |
 | --- | --- |
-| [`01_genotype_qc_mhc.sh`](01_genotype_qc_mhc.sh) | Generates initial missingness summaries, applies representative variant filters and extracts chr6:28–34 Mb for HLA preparation. |
-| [`02_post_imputation_qc.sh`](02_post_imputation_qc.sh) | Filters a Michigan HLA dosage VCF by INFO/R2 > 0.7, imports dosages with PLINK2 and applies MAC >= 5. |
+| `01_genotype_qc_mhc.sh` | Deduplication, SNPflip screening, variant/sample missingness, high-heterozygosity review, MHC-excluded LD pruning, IBD review, MAC filtering, reference-frequency review gate, HLA extraction |
+| `03_prepare_hla_imputation_input.sh` | Convert a *reviewed, reference-aligned* HLA PLINK dataset to a compressed, indexed VCF |
+| `02_post_imputation_qc.sh` | INFO/R2 > 0.7, dosage import, missingness summaries, sample/variant QC, MAC >= 5, VCF export |
 
-These are **adapted, parameterised excerpts of the study workflow**, not a standalone implementation of every cohort-specific QC or server-side imputation step. The initial script does not perform duplicate removal, SNPflip strand checks, sample outlier/relatedness exclusion, ancestry selection, or allele-frequency harmonisation; those steps were performed upstream in the historical workflow and require cohort-specific reference resources and review. The imputation service and reference-panel settings must be configured in the Michigan Imputation Server; no access links or credentials are included here.
+## HLA imputation stages and historical thresholds
 
-## Study workflow
+1. Input: GRCh37/hg19 genotype PLINK files; inspect `.bim`, `.fam`, and missingness.
+2. Identify and remove duplicate variants using the historical `get_duprem_var.py` helper.
+3. Assess ambiguous and strand-flipped markers with SNPflip and GRCh37 FASTA; review flipped variants separately. Palindromic removal was an optional commented step, **not** a verified executed filter.
+4. Initial SNP QC: `--geno 0.10 --hwe 1e-10`.
+5. Sample QC: `--mind 0.05`, high-heterozygosity outlier review (historical 3 SD helper), relatedness analysis with MHC excluded from pruning; original command history used IBD >0.9 to flag near duplicates. Additional IBS/F outlier and ancestry decisions were made in the original analysis, but their final removal lists are not included here.
+6. Final SNP QC: `--geno 0.02`, remove monomorphic variants and apply `--mac 5`.
+7. Compare allele frequencies against ancestry-relevant 1000 Genomes Phase 3 reference data after allele harmonisation; the historical workflow assessed absolute discrepancies >0.20 on chr6 and excluded flagged SNPs. This stage requires review of reference files and matched alleles.
+8. Extract chr6:28–34 Mb (GRCh37), inspect frequencies, harmonise IDs and reference alleles; the original workflow tested `rename_bim.py`, HRC/1000G checker and its generated `Run-plink.sh`. **Do not assume every exploratory command was executed for the final submission.**
+9. Upload an aligned chr6 VCF to Michigan Imputation Server with **Four-digit Multi-ethnic HLA v2** reference panel. Server-side phasing and settings should be reported from actual job metadata. Local SHAPEIT2 commands in the historical script were commented out and are not represented as executed steps.
+10. Post-imputation: the original workflow explored INFO/R2 >0.5 and >0.7; the primary public script implements >0.7. Import DS dosages using PLINK2, review missingness, apply MAC >=5 and select the analysis sample set. The original code contains both 1% and 5% variant missingness settings in different branches; 5% is exposed here and should be checked against the actual analysis outputs.
+11. Extract and encode HLA alleles/amino-acid positions for association and fine-mapping. **Not included:** the provided scripts do not demonstrate how HLA allele and amino-acid dosage matrices were generated; document this from the corresponding analysis scripts before claiming full reproducibility.
 
-1. Assess variant and sample missingness, duplicated variants, strand alignment, heterozygosity, relatedness, ancestry and reference allele-frequency concordance.
-2. Extract the HLA interval on chromosome 6 (28–34 Mb, GRCh37) and prepare reference-aligned imputation input.
-3. Submit compatible input to the Michigan Imputation Server with the four-digit multi-ethnic HLA reference panel v2. SHAPEIT2 phasing is described in the study methods; the original command history also contains a commented local SHAPEIT2 branch, so it is not presented here as a verified executed command.
-4. Retain variants meeting imputation quality R2 > 0.7 and minor allele count >= 5; prepare aligned HLA allele and amino-acid dosages for fine-mapping.
+## Required software and resources
 
-Requirements: PLINK 1.9, PLINK2, bcftools, tabix and Bash; additional original QC tools include SNPflip, Python, R, 1000 Genomes reference resources and helper scripts from the upstream tutorial. Individual-level genotype and phenotype data are not distributed.
+PLINK 1.9, PLINK2, bcftools, tabix, Bash, Python3, R, SNPflip; GRCh37 reference FASTA; 1000 Genomes Phase 3 reference data; historical `get_duprem_var.py` and high-heterozygosity helper; reviewed sample-removal and reference-frequency exclusion lists. The helper paths are provided through environment variables. The code will stop rather than silently skip unavailable QC decisions.
+
+## Cautions and deviations from historical commands
+
+- Relatedness pruning is expressed as `--indep-pairwise 50 5 0.2` followed by `--extract prune.in`; the historical `--indep 50 5 2` and `--exclude prune.out` combination requires review and is **not faithfully executable as written**.
+- SNPflip output naming and duplicate-helper input/output conventions must be checked against installed versions before running.
+- No automated replacement of `.psam` IDs based on underscores: use a verified mapping to prevent sample-ID corruption.
+- INFO/R2 filtering is applied without blindly replacing VCF FILTER strings; validate against the imputation server's exact output schema.
+- Reference alignment is a required manual gate, not a substitute for proper allele matching.
+- The supplied files have been checked for shell syntax but **not run on individual-level data**.
+
+## References
+
+- [HLA QC and imputation tutorial](https://github.com/immunogenomics/HLA_analyses_tutorial/blob/main/tutorial_HLAQCImputation.ipynb)
+- Michigan Imputation Server and Four-digit Multi-ethnic HLA v2 panel (specify server job settings in manuscript methods).
