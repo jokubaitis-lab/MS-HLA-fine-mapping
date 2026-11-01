@@ -18,11 +18,4 @@ These are **adapted, parameterised excerpts of the study workflow**, not a stand
 3. Submit compatible input to the Michigan Imputation Server with the four-digit multi-ethnic HLA reference panel v2. SHAPEIT2 phasing is described in the study methods; the original command history also contains a commented local SHAPEIT2 branch, so it is not presented here as a verified executed command.
 4. Retain variants meeting imputation quality R2 > 0.7 and minor allele count >= 5; prepare aligned HLA allele and amino-acid dosages for fine-mapping.
 
-## Usage
-
-```bash
-bash scripts/00_hla_imputation/01_genotype_qc_mhc.sh /path/to/genotypes /path/to/qc_output
-bash scripts/00_hla_imputation/02_post_imputation_qc.sh /path/to/chr6.dose.vcf.gz /path/to/hla_output
-```
-
 Requirements: PLINK 1.9, PLINK2, bcftools, tabix and Bash; additional original QC tools include SNPflip, Python, R, 1000 Genomes reference resources and helper scripts from the upstream tutorial. Individual-level genotype and phenotype data are not distributed.
