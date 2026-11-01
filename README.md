@@ -16,15 +16,17 @@ The workflow follows two connected stages. Genotype QC, haplotype phasing and HL
 
 ### 1. Genotype QC and HLA imputation
 
-**Reference:** [HLA imputation tutorial](https://github.com/immunogenomics/HLA_analyses_tutorial/blob/main/tutorial_HLAQCImputation.ipynb) .
+**Reference:** [HLA imputation tutorial](https://github.com/immunogenomics/HLA_analyses_tutorial/blob/main/tutorial_HLAQCImputation.ipynb).
 
-Genotypes were quality-controlled before pre-phasing with **SHAPEIT2** and HLA imputation through the **Michigan Imputation Server** using **Minimac4** and the multi-ethnic HLA reference panel v2. Following imputation and study-specific quality control, classical HLA alleles, amino-acid polymorphisms and MHC SNPs were available for association analysis. The manuscript reports **16,056 retained MHC markers** after post-imputation filtering.
+Genotypes underwent quality control, including variant and sample missingness, heterozygosity, relatedness, minor allele count and allele-frequency concordance checks. The MHC region (chr6:28–34 Mb, GRCh37/hg19) was extracted, and variants were harmonised against reference data before HLA imputation through the **Michigan Imputation Server**, using **Minimac4** and the **multi-ethnic HLA reference panel v2**. Following imputation and study-specific quality control, classical HLA alleles, amino-acid polymorphisms and MHC SNPs were prepared for association analysis.
 
-- [`00_hla_imputation/README.md`](scripts/00_hla_imputation/README.md) summarises the genotype QC, HLA imputation and post-imputation processing stages.
-- [`00_hla_imputation/01_genotype_qc_mhc.sh`](scripts/00_hla_imputation/01_genotype_qc_mhc.sh) documents selected genotype QC and chr6:28–34 Mb extraction commands.
-- [`00_hla_imputation/02_post_imputation_qc.sh`](scripts/00_hla_imputation/02_post_imputation_qc.sh) illustrates post-imputation R² and minor allele count filtering of HLA dosage VCFs.
+- [`00_hla_imputation/README.md`](scripts/00_hla_imputation/README.md) summarises the genotype QC, reference harmonisation, HLA imputation and post-imputation processing stages.
+- [`00_hla_imputation/01_genotype_qc_mhc.sh`](scripts/00_hla_imputation/01_genotype_qc_mhc.sh) documents pre-imputation genotype QC, sample and variant filtering, and MHC extraction.
+- [`00_hla_imputation/03_prepare_hla_imputation_input.sh`](scripts/00_hla_imputation/03_prepare_hla_imputation_input.sh) prepares reference-harmonised VCF files for imputation.
+- [`00_hla_imputation/02_post_imputation_qc.sh`](scripts/00_hla_imputation/02_post_imputation_qc.sh) documents post-imputation R², missingness and minor allele count filtering.
+- [`00_hla_imputation/helpers/`](scripts/00_hla_imputation/helpers/) contains supporting Python and R scripts for genotype QC, outlier detection and variant harmonisation.
 
-The scripts are parameterised excerpts of the study workflow; reference alignment, cohort-specific sample QC and server-side imputation are described rather than redistributed as executable steps.
+The scripts are adapted from the original study workflow for public sharing. Cohort-specific exclusion lists, reference datasets and server-side imputation procedures are not redistributed. Reference harmonisation and downstream HLA allele/amino-acid processing require additional external resources or study-specific steps.
 
 ### 2. HLA association and fine-mapping
 
