@@ -77,10 +77,6 @@ The shared R scripts primarily use base R; install additional R packages if indi
 
 ## Citation
 
-If you use this repository, please cite the associated manuscript:
-
-> He J, et al. *HLA Fine-Mapping Resolves Multiple Sclerosis Susceptibility to Amino-Acid Residues that Shape Peptide-Binding Specificity.* Manuscript citation and DOI to be added upon publication.
-
 For the foundational tutorial, please also cite the associated work indicated in [HLA_analyses_tutorial](https://github.com/immunogenomics/HLA_analyses_tutorial).
 
 ## Contacts:
