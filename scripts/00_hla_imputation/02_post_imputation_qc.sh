@@ -8,7 +8,7 @@ for tool in bcftools tabix plink2; do command -v "$tool" >/dev/null || exit 1; d
 # Historical runs explored R2>0.5 and R2>0.7; 0.7 is the primary setting.
 # Historical FILTER field contained PASS;GENOTYPED; check bcftools handling
 # on the exact exported VCF rather than rewriting FILTER values blindly.
-bcftools view -i 'INFO/R2>0.7' -Oz -o "${out}.r2_0.7.vcf.gz" "$vcf"
+bcftools view -i 'INFO/R2>=0.7' -Oz -o "${out}.r2_0.7.vcf.gz" "$vcf"
 tabix -p vcf "${out}.r2_0.7.vcf.gz"
 plink2 --vcf "${out}.r2_0.7.vcf.gz" dosage=DS --make-pgen --out "${out}.dosage"
 # Do not guess FID/IID by splitting underscores; supply a reviewed mapping if needed.
