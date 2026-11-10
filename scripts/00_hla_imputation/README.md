@@ -33,7 +33,3 @@ Bash, PLINK 1.9, PLINK2, Python 3, R with `ggplot2`, SNPflip, bcftools, tabix. F
 - 1000 Genomes Phase 3 allele frequency/genotype reference, used for concordance checking and variant naming.
 - HRC r1.1 GRCh37 sites reference and the HRC-1000G checking script, used in historical alignment commands; verify applicability to the actual HLA panel.
 - Four-digit Multi-ethnic HLA v2, selected in MIS. The server performs panel-specific imputation; this repository does not redistribute the panel.
-
-## Manuscript alignment
-
-The public QC script uses sample and final variant missingness cutoffs of 3%, and the heterozygosity helper screens both tails at 3 SD. These are manuscript-aligned adaptations, not verified historical run settings. Relatedness screening uses PI_HAT >0.9 within cohorts; cross-cohort duplicate screening (PI_HAT >0.98) was performed separately and is not implemented in this directory. The script requires manual review of sample exclusion, strand and frequency harmonisation files.
