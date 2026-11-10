@@ -1,20 +1,30 @@
 #!/usr/bin/env python3
-"""Sort PLINK2 logistic results by named P column, retaining header and all rows."""
-import csv, math, sys
-from pathlib import Path
-if len(sys.argv) != 3: sys.exit("Usage: sort_plink_logistic.py INPUT OUTPUT")
+"""Sort additive PLINK2 logistic rows by numeric P value.
+Usage: python3 sort_plink_logistic.py INPUT.tsv OUTPUT.tsv
+"""
+import csv
+import math
+import sys
+
+if len(sys.argv) != 3:
+    sys.exit("Usage: sort_plink_logistic.py INPUT.tsv OUTPUT.tsv")
 with open(sys.argv[1], newline="") as f:
-    reader=csv.DictReader(f, delimiter="\t")
-    if not reader.fieldnames or "P" not in reader.fieldnames: sys.exit("Missing P column")
-    fields=reader.fieldnames
-    rows=list(reader)
-def key(row):
-    try:
-        p=float(row["P"])
-        return p if math.isfinite(p) else float("inf")
-    except (TypeError, ValueError): return float("inf")
-rows.sort(key=key)
-Path(sys.argv[2]).parent.mkdir(parents=True, exist_ok=True)
-with open(sys.argv[2],"w",newline="") as f:
-    w=csv.DictWriter(f,fieldnames=fields,delimiter="\t",lineterminator="\n")
-    w.writeheader();w.writerows(rows)
+    reader = csv.DictReader(f, delimiter="\t")
+    if not reader.fieldnames or not {"ID", "P", "TEST"}.issubset(reader.fieldnames):
+        sys.exit("Input requires ID, P and TEST columns")
+    fields = reader.fieldnames
+    rows = []
+    for row in reader:
+        if row["TEST"] != "ADD":
+            continue
+        try:
+            p = float(row["P"])
+        except (TypeError, ValueError):
+            continue
+        if math.isfinite(p):
+            rows.append((p, row))
+rows.sort(key=lambda item: item[0])
+with open(sys.argv[2], "w", newline="") as f:
+    writer = csv.DictWriter(f, fieldnames=fields, delimiter="\t")
+    writer.writeheader()
+    writer.writerows(row for _, row in rows)
