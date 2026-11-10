@@ -21,12 +21,13 @@ The workflow follows two connected stages. Genotype QC, haplotype phasing and HL
 Genotypes underwent quality control, including variant and sample missingness, heterozygosity, relatedness, minor allele count and allele-frequency concordance checks. The MHC region (chr6:28–34 Mb, GRCh37/hg19) was extracted, and variants were harmonised against reference data before HLA imputation through the **Michigan Imputation Server**, using **Minimac4** and the **multi-ethnic HLA reference panel v2**. Following imputation and study-specific quality control, classical HLA alleles, amino-acid polymorphisms and MHC SNPs were prepared for association analysis.
 
 - [`00_hla_imputation/README.md`](scripts/00_hla_imputation/README.md) summarises the genotype QC, reference harmonisation, HLA imputation and post-imputation processing stages.
+- [`00_hla_imputation/QC_filtered.sh`](scripts/00_hla_imputation/QC_filtered.sh) screens for overlapping ANZgene–MSBase individuals using LD-pruned SNPs and PI_HAT > 0.98; input datasets must first be harmonised to GRCh37/hg19.
 - [`00_hla_imputation/01_genotype_qc_mhc.sh`](scripts/00_hla_imputation/01_genotype_qc_mhc.sh) documents pre-imputation genotype QC, sample and variant filtering, and MHC extraction.
 - [`00_hla_imputation/03_prepare_hla_imputation_input.sh`](scripts/00_hla_imputation/03_prepare_hla_imputation_input.sh) prepares reference-harmonised VCF files for imputation.
 - [`00_hla_imputation/02_post_imputation_qc.sh`](scripts/00_hla_imputation/02_post_imputation_qc.sh) documents post-imputation R², missingness and minor allele count filtering.
 - [`00_hla_imputation/helpers/`](scripts/00_hla_imputation/helpers/) contains supporting Python and R scripts for genotype QC, outlier detection and variant harmonisation.
 
-The scripts are adapted from the original study workflow for public sharing. Cohort-specific exclusion lists, reference datasets and server-side imputation procedures are not redistributed. Reference harmonisation and downstream HLA allele/amino-acid processing require additional external resources or study-specific steps.
+The scripts are adapted from the original study workflow for public sharing; they document the analytical methods but are not a complete reproduction of the original runs. Cohort-specific exclusion lists, reference datasets and server-side imputation procedures are not redistributed. Reference harmonisation and downstream HLA allele/amino-acid processing require additional external resources or study-specific steps.
 
 ### 2. HLA association and fine-mapping
 
@@ -46,7 +47,7 @@ The fine-mapping analyses use imputed HLA allele dosages and allele-to-residue m
 | **Additional MHC residue associations** | [`05_additional_mhc/univar_residue_logistic.R`](scripts/05_additional_mhc/univar_residue_logistic.R) | Residue-level association analysis at HLA loci|
 | **Conditional residue/haplotype effect estimates** | [`05_additional_mhc/multiHLA_block_conditional_table.R`](scripts/05_additional_mhc/multiHLA_block_conditional_table.R) | Multivariable logistic regression of target residue haplotypes, adjusted for selected residues at other HLA loci; produces ORs, 95% CIs and frequency tables |
 
-The table indicates the associated manuscript analyses. Publication figures require additional plotting and formatting. 
+The table maps scripts to manuscript analyses; manuscript results cannot be verified without the original inputs and run outputs. Publication figures require additional plotting and formatting. 
 
 ## Input data
 
@@ -66,11 +67,11 @@ Allele identifiers and dosage-column ordering must be consistent across inputs.
 
 | Stage | Software |
 | --- | --- |
-| Genotype processing | PLINK 1.9; standard shell utilities |
+| Genotype processing | PLINK 1.9, PLINK2, Python 3, bcftools, tabix; standard shell utilities |
 | Genotype strand/QC preparation | SNPflip and relevant reference FASTA, where applicable |
 | Haplotype phasing | SHAPEIT2 |
 | HLA imputation | Michigan Imputation Server / Minimac4; multi-ethnic HLA reference panel v2 |
-| Fine-mapping and model comparison | R, including base `stats` functions |
+| Fine-mapping and model comparison | R (`data.table`, `dplyr`, `tidyr`, `stringr`, `ggplot2` where used) |
 
 The shared R scripts primarily use base R; install additional R packages if indicated by an individual script. Software versions and command-line options should be selected consistently with the input reference panel and genome build (**GRCh37/hg19** in this study).
 
